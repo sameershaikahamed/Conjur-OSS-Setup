@@ -1,0 +1,16 @@
+- !policy
+  id: my-app
+  body:
+    - !variable
+      id: secret
+
+    - !group
+      id: developers
+
+    - !user
+      id: john
+
+    - !deny
+      role: !user john
+      resource: !variable my-app/secret
+      privilege: [read, execute]

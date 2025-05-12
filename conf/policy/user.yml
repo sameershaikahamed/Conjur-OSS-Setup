@@ -1,0 +1,47 @@
+# declare the groups needed
+- !group
+  id: security_admin
+  owner: !user admin
+
+- !group
+  id: developers
+  owner: !group security_admin
+
+- !group
+  id: developers-admin
+  owner: !group security_admin
+
+- !group
+  id: operations-admin
+  owner: !group security_admin
+
+# list the users
+- !user
+  id: angela.mcconnell
+  owner: !group security_admin
+
+- !user
+  id: harper.sarka
+  owner: !group security_admin
+
+- !user
+  id: dave.nagi
+  owner: !group security_admin
+
+# add users to groups
+- !grant
+  role: !group developers-admin
+  members:
+    - !user angela.mcconnell
+
+- !grant
+  role: !group operations-admin
+  members:
+    - !user dave.nagi
+
+- !grant
+  role: !group developers
+  members:
+    - !member
+      role: !group developers-admin
+    - !user harper.sarka

@@ -1,0 +1,178 @@
+# conjur policy load jenkins projects.yml
+
+- !policy
+  id: jenkins
+  body:
+    - !policy
+      id: projects
+      annotations:
+        description: Projects that do not fall under a folder within Jenkins or project-specific host identities for authn-jwt/jenkins authentication.
+        jenkins: true
+      body:
+ 
+        # Group of hosts that can authenticate using this JWT Authenticator
+        - !group
+
+
+
+        - !host
+          id: multiple-pipeline-job
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/identity: multiple-pipeline-job-multiple-pipeline-job
+ 
+
+        # `jenkins_name` is the primary identifying claim
+        - !host
+          id: Dev-Team-1
+          annotations:
+            jenkins: true
+            #authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/identity: -Dev-Team-1
+
+        - !host
+          id: Dev-Team-3
+          annotations:
+            jenkins: true
+            #authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/identity: -Dev-Team-3
+
+        - !host
+          id: childjob
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_parent_full_name: Dev-Team-3
+            authn-jwt/jenkins/identity: Dev-Team-3-childjob
+
+
+
+        - !host
+          id: test-pipeline
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_full_name: F1_ALL_ALL_UCE/F1_ALL_ALL/Jenkins-Pam
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/identity: F1_ALL_ALL_UCE/F1_ALL_ALL/Jenkins-Pam-test-pipeline
+
+        - !host
+          id: test-pipeline-Dev-Team-1
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_full_name: Dev-Team-1
+            authn-jwt/jenkins/sub: Dev-Team-1/test-pipeline-Dev-Team-1
+
+        - !host
+          id: test-mbp-pipeline
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Branch
+            #authn-jwt/jenkins/jenkins_parent_name: Dev-Team-1
+            authn-jwt/jenkins/identity: test-mbp-pipeline-test-mbp-pipeline
+
+
+        - !host
+          id: mbp
+          annotations:
+            jenkins: true
+            #authn-jwt/jenkins/jenkins_pronoun: Branch
+            authn-jwt/jenkins/jenkins_full_name: mbp
+            authn-jwt/jenkins/identity: -mbp
+
+
+        - !host
+          id: test-multi-folder
+          annotations:
+            jenkins: true
+            # authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_parent_full_name: Dev-Team-1
+            authn-jwt/jenkins/identity: Dev-Team-1-test-multi-folder
+
+
+
+        - !host
+          id: test-multi-folder-test-pipeline
+          annotations:
+            jenkins: true
+            # authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_parent_name: Dev-Team-1
+            authn-jwt/jenkins/identity: Dev-Team-1-test-multi-folder-test-pipeline  
+
+        - !host
+          id: freestyle-project
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/identity: -freestyle-project
+            authn-jwt/jenkins/jenkins_pronoun: Project
+
+        
+
+
+            
+            
+      #Parent   folder
+        - !host
+          id: F1_ALL_ALL_UCE
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/identity: -F1_ALL_ALL_UCE
+
+       #Parent Child folder
+        - !host
+          id: F1_ALL_ALL
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_parent_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: F1_ALL_ALL_UCE
+
+        #Parent Child 2 folder
+        - !host 
+          id: Jenkins-Pam
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_parent_name: F1_ALL_ALL
+            authn-jwt/jenkins/identity: F1_ALL_ALL_UCE/F1_ALL_ALL-Jenkins-Pam
+
+
+        - !host
+          id: no-folder-pipeline-job
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_full_name: no-folder-pipeline-job
+            authn-jwt/jenkins/identity: no-folder-pipeline-job-no-folder-pipeline-job
+
+        #- !user
+         # id: user
+         # permissions:
+            #  - read
+        # Grant all hosts in collection above to be members of projects group
+        - !grant
+          role: !group
+          members:
+            - !host test-pipeline
+            - !host test-mbp-pipeline
+            - !host Dev-Team-1
+            - !host Dev-Team-3
+            - !host freestyle-project
+            - !host mbp
+            - !host test-multi-folder
+            - !host test-pipeline-Dev-Team-1
+            - !host test-multi-folder-test-pipeline
+            - !host F1_ALL_ALL_UCE
+            - !host F1_ALL_ALL
+            - !host multiple-pipeline-job
+            - !host Jenkins-Pam
+            - !host no-folder-pipeline-job
+  
+
+                    
+# Grant access to Conjur secrets for user role     
+
+- !grant
+  role: !group conjur/authn-jwt/jenkins/consumers
+  members: 
+    - !group jenkins/projects
+
+

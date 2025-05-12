@@ -1,0 +1,151 @@
+#version: '3'
+services:
+  openssl:
+    image: cyberark/conjur
+    container_name: openssl
+    entrypoint:
+     - openssl
+     - req
+     - -newkey
+     - rsa:2048
+     - -days
+     - "365"
+     - -nodes
+     - -x509
+     - -config
+     - /tmp/conf/tls.conf
+     - -extensions
+     - v3_ca
+     - -keyout
+     - /tmp/conf/nginx.key
+     - -out
+     - /tmp/conf/nginx.crt
+    volumes:
+     - ./conf/tls/:/tmp/conf
+
+  bot_app:
+    image: cfmanteiga/alpine-bash-curl-jq
+    privileged: true
+    container_name: bot_app
+    command: tail -F anything
+    volumes:
+    - ./program.sh:/tmp/program.sh
+    restart: on-failure
+#10.16
+  database:
+    image: postgres:15
+    container_name: postgres_database
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: password
+      POSTGRES_PASSWORD: SuperSecretPg
+    ports:
+      - 8432:5432
+
+  pgadmin:
+#    https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: user@domain.com
+      PGADMIN_DEFAULT_PASSWORD: SuperSecret
+    ports:
+      - 8081:80
+
+  conjur:
+    image: cyberark/conjur
+    container_name: conjur_server
+    command: server
+    environment:
+      DATABASE_URL: postgres://postgres:SuperSecretPg@database/postgres
+      CONJUR_DATA_KEY:
+      CONJUR_AUTHENTICATORS: 'authn, authn-jwt/jenkins'
+    depends_on:
+    - database
+    restart: on-failure
+    ports:
+      - 8080:80
+
+  proxy:
+    image: nginx:1.13.6-alpine
+    container_name: nginx_proxy
+    ports:
+      - "8443:443"
+    volumes:
+      - ./conf/:/etc/nginx/conf.d/:ro
+      - ./conf/tls/:/etc/nginx/tls/:ro
+    depends_on:
+    - conjur
+    - openssl
+    restart: on-failure
+
+  client:
+    image: cyberark/conjur-cli:8
+    container_name: conjur_client
+    depends_on: [ proxy ]
+    entrypoint: sleep
+    command: infinity
+    volumes:
+    - ./conf/policy:/policy
+
+#2.375  2.417 2.401.1 2.346  2.387.1  2.361.4   2.346.3  2.426.3 2.401.3
+  jenkins_server:
+    image: jenkins/jenkins:2.401.3
+    container_name: jenkins_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8088:8080
+    volumes:
+      - ./jenkins_custom_volume:/var/jenkins_home
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+    restart: on-failure
+
+#2.401.3.4  2.387.3.5   2.401.3.4  2.387.2.4 to 2.414.1.4  2.361.1.2 2.387.3.5 2.332.4.1 2.426.2.2
+  cloudbees:
+   image: cloudbees/cloudbees-core-mm:2.426.2.2
+   container_name: cloudbees
+   ports:
+   - 8085:8080
+   restart: on-failure
+   volumes:
+   - ./cloudbees:/var/jenkins_home
+
+   
+  bitbucket:
+    image: atlassian/bitbucket
+    container_name: bitbucket
+    volumes:
+    - ./bitbucket:/var/atlassian/application-data/bitbucket
+    ports:
+    - 7990:7990
+    - 7999:7999
+    restart: on-failure
+
+
+  sonarqube-db:
+    image: postgres:alpine
+    container_name: sonarqube-db
+    environment:
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=sonar
+      - POSTGRES_DB=sonarqube
+    volumes:
+      - ./sonarqube-db-data:/var/lib/postgresql/data
+    restart: always
+
+  sonarqube:
+    image: sonarqube:latest # Use the latest SonarQube image
+    container_name: sonarqube
+    ports:
+      - 192.168.1.3:9000:9000 # Expose SonarQube on port 9000
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://sonarqube-db:5432/sonarqube
+      - SONARQUBE_JDBC_USERNAME=sonar
+      - SONARQUBE_JDBC_PASSWORD=sonar
+    volumes:
+      - ./sonarqube:/var/sonarqube
+    depends_on:
+      - sonarqube-db # Ensures that the database is started before SonarQube
+    restart: on-failure

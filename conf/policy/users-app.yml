@@ -1,0 +1,29 @@
+#There are different ways to accomplish this, but one possibility is to update the users-app.yml file to include a Host Factory:
+#REf link https://developer.cyberark.com/blog/understanding-conjur-policy/
+- !policy
+  id: users-app
+  body:
+    - &variables
+      - !variable db-username
+      - !variable db-password
+
+    - !group secrets-users
+
+     - !layer apps-layer
+
+    - !host-factory
+      id: apps
+      layers: [ !layer apps-layer ]
+
+      
+
+    # secrets-users can read and execute
+    - !permit
+      resource: *variables
+      privileges: [ read, execute ]
+      role: !group secrets-users
+
+
+    - !grant
+      role: !group secrets-users
+      member: !layer apps-layer
