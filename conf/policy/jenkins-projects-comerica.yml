@@ -1,0 +1,524 @@
+# conjur policy load jenkins projects.yml
+
+- !policy
+  id: jenkins
+  body:
+    - !policy
+      id: projects
+      annotations:
+        description: Projects that do not fall under a folder within Jenkins or project-specific host identities for authn-jwt/jenkins authentication.
+        jenkins: true
+      body:
+ 
+        # Group of hosts that can authenticate using this JWT Authenticator
+        - !group
+
+
+
+
+        - !host
+          id: ISTR
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: ISTR
+            authn-jwt/jenkins/identity: -ISTR
+
+        - !host
+          id: ARK
+          annotations:
+            authn-jwt/jenkins/jenkins_parent_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: ISTR
+            authn-jwt/jenkins/jenkins_parent_name: ISTR
+            authn-jwt/jenkins/jenkins_name: ARK
+            authn-jwt/jenkins/jenkins_full_name: ISTR/ARK
+            #authn-jwt/jenkins/identity: ISTR-ARK
+
+        - !host
+          id: child-folder1
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: ISTR
+
+        - !host
+          id: test-ark-job
+          annotations:
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_parent_full_name: ISTR/ARK
+            authn-jwt/jenkins/identity: ISTR/ARK-test-ark-job
+
+
+        - !host
+          id: sub-Folder-1
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: sub-Folder-1
+            #authn-jwt/jenkins/sub: sub-Folder-1
+
+
+        - !host
+          id: sub-Folder-2
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: sub-Folder-1
+            authn-jwt/jenkins/sub: sub-Folder-1/sub-Folder-2
+
+        - !host
+          id: sub-Folder-3
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: sub-Folder-1/sub-Folder-2
+            authn-jwt/jenkins/jenkins_full_name: sub-Folder-1/sub-Folder-2/sub-Folder-3
+
+
+        - !host
+          id: pipelinejob
+          annotations:
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_parent_full_name: sub-Folder-1/sub-Folder-2
+            #authn-jwt/jenkins/sub: sub-Folder-1/sub-Folder-2/pipelinejob
+
+        - !host
+          id: pipelinejob-folder-3
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: sub-Folder-1/sub-Folder-2/sub-Folder-3
+            #authn-jwt/jenkins/sub: sub-Folder-1/sub-Folder-2/pipelinejob
+
+
+        - !host
+          id: folder-1-Regresstion-Job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_name: folder-1-Regresstion-Job
+
+
+        - !host
+          id: folder-2-Regresstion-Job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: folder-1-Regresstion-Job
+            authn-jwt/jenkins/jenkins_name: folder-2-Regresstion-Job
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job
+
+
+        - !host
+          id: folder-2-Regresstion-Pipeline
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job
+
+        - !host
+          id: regression-multifolder-freestyle-project
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job
+
+
+            
+
+
+        - !host
+          id: folder-3-regression-job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job
+
+        #- !host
+          #id: TopLevelFolder
+          #annotations:
+            #authn-jwt/jenkins/jenkins_task_noun: Build
+           # authn-jwt/jenkins/jenkins_full_name: TopLevelFolder
+            #authn-jwt/jenkins/sub: TopLevelFolder
+
+        - !host
+          id: subLevelFolder-1
+          annotations:
+            authn-jwt/jenkins/jenkins_parent_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: TopLevelFolder/subLevelFolder-1
+            authn-jwt/jenkins/sub: TopLevelFolder/subLevelFolder-1
+
+
+        - !host
+          id: subChildJob-1
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: TopLevelFolder/subLevelFolder-1/subChildJob-1
+            authn-jwt/jenkins/sub: TopLevelFolder/subLevelFolder-1/subChildJob-1
+
+        - !host
+          id: freestyle-project
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: freestyle-project
+            authn-jwt/jenkins/sub: freestyle-project
+
+
+        - !host
+          id: standalone-Pipeline
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: standalone-Pipeline
+
+
+        - !host
+          id: folder-1-pipeline-job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_name: folder-1-Regresstion-Job/folder-1-pipeline-job
+
+
+        - !host
+          id: bitbucket-multibranch-standalone
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            authn-jwt/jenkins/jenkins_full_name: bitbucket-multibranch-standalone
+
+
+        - !host
+          id: multi-folder-level-3-bitbucket-multibranch
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job/multi-folder-level-3-bitbucket-multibranch
+
+        - !host
+          id: bitbucket-folder-level
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: bitbucket-folder-level
+
+        - !host
+          id: bitbucket-folder-level-multibranch
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            authn-jwt/jenkins/jenkins_full_name: bitbucket-folder-level/bitbucket-folder-level-multibranch
+
+        - !host
+          id: mutli-branch-standalone-Intel
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            authn-jwt/jenkins/jenkins_full_name: mutli-branch-standalone-Intel
+
+
+        - !host
+          id: parent-folder-pipeline
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: multi-child-folder/parent-folder-pipeline
+            authn-jwt/jenkins/jenkins_parent_full_name: multi-child-folder
+
+
+ 
+ 
+
+            
+
+
+        - !host
+          id: multi-folder-child-job
+          annotations:
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline
+            authn-jwt/jenkins/jenkins_full_name: multi-child-folder/multi-folder-child-2/multi-folder-child-3/multi-folder-child-job
+
+        - !host
+          id: multi-folder-child-3
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: multi-child-folder/multi-folder-child-2/multi-folder-child-3
+
+
+        - !host
+          id: multi-child-folder
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: multi-child-folder
+
+
+        - !host
+          id: +-pipe.test-pipe.test"
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: +-pipe.test-pipe.test"
+
+
+        - !host
+          id: intel-multi-folder-level-1
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1
+
+
+        - !host
+          id: intel-multi-branch-job-1
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+
+        - !host
+          id: folder-4-regression-job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job/folder-4-regression-job
+            
+
+
+        - !host
+          id: freestyle-project-4
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job/folder-4-regression-job/freestyle-project-4
+            
+
+        - !host
+          id: folder-4-inside-pipelinejob
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/folder-3-regression-job/folder-4-regression-job/folder-4-inside-pipelinejob
+            
+        
+     
+        - !host
+          id: sonarQube-Conjur-Credentials-Scanner
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: sonarQube-Conjur-Credentials-Scanner
+
+        - !host
+          id: bitbucket-sonar-qube
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/bitbucket-sonar-qube
+
+
+        - !host
+          id: intel-test-pipeline
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/intel-test-pipeline
+            
+         
+        - !host
+          id: bitbucket-instance
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Scan
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: folder-1-Regresstion-Job/folder-2-Regresstion-Job/bitbucket-instance
+
+        - !host
+            id: GENERIC
+            annotations:
+              authn-jwt/jenkins/jenkins_task_noun: Build
+              # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+              #authn-jwt/jenkins/jenkins_full_name: GENERIC/sfip
+
+      
+        - !host
+            id: sfip
+            annotations:
+              authn-jwt/jenkins/jenkins_task_noun: Build
+              # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+              #authn-jwt/jenkins/jenkins_full_name: GENERIC/sfip
+
+
+        - !host
+          id: Internal-freestyle
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: Internal-freestyle
+            authn-jwt/jenkins/identity: Internal-freestyle
+
+
+        - !host
+          id: jenkins-folder
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: jenkins-folder
+
+        - !host
+          id: folder-childJob
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            authn-jwt/jenkins/jenkins_parent_full_name: jenkins-folder
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: jenkins-folder/folder-childJob
+            authn-jwt/jenkins/sub: jenkins-folder/folder-childJob
+
+        - !host
+          id: non-conjur-child-folder
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: non-conjur-folder/non-conjur-child-folder
+
+        - !host
+          id: non-conjur-child-job
+          annotations:
+            authn-jwt/jenkins/jenkins_task_noun: Build
+            # authn-jwt/jenkins/jenkins_full_name: intel-multi-folder-level-1/intel-multi-branch-job-1
+            authn-jwt/jenkins/jenkins_full_name: non-conjur-folder/non-conjur-child-folder/non-conjur-child-job
+
+        - !host
+          id: GlobalCredentials
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_full_name: GlobalCredentials
+
+
+        - !host
+          id: re-engineering
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_full_name: re-engineering
+            authn-jwt/jenkins/jenkins_pronoun: Folder
+
+
+        - !host
+          id: re-engineering-child-folder
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Folder
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder
+
+
+        - !host
+          id: re-engineering-child-sub-folder
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_parent_task_noun: Build 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder
+
+        - !host
+          id: re-engineering-multi-folder-job
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-multi-folder-job
+
+        - !host
+          id: re-engineering-child-sub-sub-folder
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Folder 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-child-sub-sub-folder
+
+        - !host
+          id: re-engineering-child-sub-sub-sub-folder
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Folder 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-child-sub-sub-folder/re-engineering-child-sub-sub-sub-folder
+        
+        - !host
+          id: re-engineering-multi-multi-folder-job
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Pipeline 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-child-sub-sub-folder/re-engineering-child-sub-sub-sub-folder/re-engineering-multi-multi-folder-job
+
+           
+        - !host
+          id: re-engineering-multi-branch-bitbucket
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Multibranch Pipeline 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-child-sub-sub-folder/re-engineering-child-sub-sub-sub-folder/re-engineering-multi-branch-bitbucket
+           
+            
+        - !host
+          id: re-engineering-multi-multi-folder-multi-branch
+          annotations:
+            jenkins: true
+            authn-jwt/jenkins/jenkins_pronoun: Multibranch Pipeline 
+            authn-jwt/jenkins/jenkins_full_name: re-engineering/re-engineering-child-folder/re-engineering-child-sub-folder/re-engineering-child-sub-sub-folder/re-engineering-child-sub-sub-sub-folder/re-engineering-multi-multi-folder-multi-branch
+            
+        #- !host
+          #id: freestyle-project-publicKey
+          #annotations:
+            #jenkins: true
+            #authn-jwt/jenkins/jenkins_pronoun: Project
+            #authn-jwt/jenkins/sub: freestyle-project-publicKey
+            #restricted_to: http://localhost:8088
+
+
+
+        # Grant all hosts in collection above to be members of projects group
+        - !grant
+          role: !group
+          members:
+            - !host ISTR
+            - !host ARK
+            - !host test-ark-job
+            - !host sub-Folder-1
+            - !host sub-Folder-2
+            - !host sub-Folder-3
+            - !host pipelinejob
+            #- !host TopLevelFolder
+            - !host subLevelFolder-1
+            - !host subChildJob-1
+            - !host freestyle-project
+            - !host child-folder1
+            - !host folder-1-Regresstion-Job
+            - !host folder-2-Regresstion-Job
+            - !host folder-3-regression-job
+            - !host folder-4-regression-job
+            - !host regression-multifolder-freestyle-project
+            - !host folder-2-Regresstion-Pipeline
+            - !host standalone-Pipeline
+            - !host folder-1-pipeline-job
+            - !host bitbucket-multibranch-standalone
+            - !host multi-folder-level-3-bitbucket-multibranch
+            - !host bitbucket-folder-level-multibranch
+            - !host bitbucket-folder-level
+            - !host mutli-branch-standalone-Intel
+            - !host parent-folder-pipeline
+            - !host multi-folder-child-job
+            - !host multi-folder-child-3
+            - !host multi-child-folder
+            - !host pipelinejob-folder-3
+            - !host +-pipe.test-pipe.test"
+            - !host intel-multi-folder-level-1
+            - !host intel-multi-branch-job-1
+            - !host freestyle-project-4
+            - !host folder-4-inside-pipelinejob
+            - !host sonarQube-Conjur-Credentials-Scanner
+            #- !host freestyle-project-publicKey
+            - !host bitbucket-sonar-qube
+            - !host intel-test-pipeline
+            - !host bitbucket-instance
+            - !host sfip
+            - !host GENERIC
+            - !host Internal-freestyle
+            - !host jenkins-folder
+            - !host folder-childJob
+            - !host non-conjur-child-folder
+            - !host non-conjur-child-job
+            - !host GlobalCredentials
+            - !host re-engineering
+            - !host re-engineering-child-folder
+            - !host re-engineering-child-sub-folder
+            - !host re-engineering-child-sub-sub-folder
+            - !host re-engineering-child-sub-sub-sub-folder
+            - !host re-engineering-multi-folder-job
+            - !host re-engineering-multi-multi-folder-job
+            - !host re-engineering-multi-branch-bitbucket
+            - !host re-engineering-multi-multi-folder-multi-branch
+
+                    
+# Grant access to Conjur secrets for user role     
+
+- !grant
+  role: !group conjur/authn-jwt/jenkins/consumers
+  members: 
+    - !group jenkins/projects

@@ -1,0 +1,459 @@
+
+#!/bin/bash
+set +x 
+
+rm -rf .env
+
+docker-compose down -v
+
+#docker-compose build
+
+# docker-compose up -d conjur
+
+# docker-compose up -d proxy
+
+docker-compose exec -T conjur conjurctl wait -r 240
+
+#Generate the master key
+
+docker-compose run --no-deps --rm conjur data-key generate > data_key
+
+export CONJUR_DATA_KEY="$(< data_key)"
+
+echo $CONJUR_DATA_KEY
+
+#create services
+
+docker-compose up -d
+
+sleep 20
+
+echo "created myConjurAccount and login"
+
+echo "***************"
+
+echo " "
+
+admin_api_key=$(docker-compose exec conjur conjurctl account create myConjurAccount | awk '/API key for admin/ {print $NF}'| tr '  \n\r' ' '|awk '{$1=$1};1')
+
+export CONJUR_AUTHN_API_KEY=$admin_api_key
+
+echo $CONJUR_AUTHN_API_KEY
+
+echo " "
+
+echo "****************"
+
+echo "initiating myConjurAccount and logging in as a  admin user"
+
+
+
+
+
+#docker-compose exec client conjur init -u conjur -a myConjurAccount 
+
+docker-compose exec client conjur init -u https://proxy -a myConjurAccount --self-signed
+
+echo "copying conjur-server.pem file to local directory"
+
+docker-compose cp client:/home/cli/conjur-server.pem .
+
+cat conjur-server.pem
+
+echo "converting conjur-server.pem file to conjur-server.der file"
+
+openssl x509 -outform der -in conjur-server.pem -out conjur-server.der
+
+
+echo " "
+echo "****************"
+echo "Log in to Conjur as admin"
+echo " "
+
+docker-compose exec client conjur authn login -u admin -p $CONJUR_AUTHN_API_KEY
+
+docker-compose exec client conjur login -i admin -p $CONJUR_AUTHN_API_KEY
+
+echo "****************"
+
+echo "conjur user login   "
+
+
+echo "****************"
+
+docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects.yml
+docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects-comerica.yml
+
+docker-compose exec client conjur policy load -b root -f policy/conjur.yml
+
+
+
+
+
+echo "Log in to Conjur as user "
+
+#docker-compose exec client conjur login -i user 
+
+user_dev_api_key=$(docker-compose exec client conjur user rotate-api-key -i myConjurAccount:user:alice)
+
+export CONJUR_USER_AUTHN_API_KEY=$user_dev_api_key
+
+echo $CONJUR_USER_AUTHN_API_KEY
+
+echo "conjur user alice role logged"
+
+#docker-compose exec client conjur policy load -b root -f /policy/dev.yml 
+#echo "loading JWT based authentication policy authn-jwt-jenkins.yml"
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects.yml
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+#docker-compose exec client conjur policy load -b root -f  /policy/jenkins-projects.yml
+
+#echo "loading user account policy file"
+
+
+#docker-compose exec client conjur policy load -b root -f policy/conjur.yml
+#echo " "
+
+
+echo "loading authentication values"
+#conjur_cli:8
+docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://jenkins_server:8080/jwtauth/conjur-jwk-set"
+
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/public-keys -v "0814045308"
+
+
+
+
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://jenkins_server_2.417:8080/jwtauth/conjur-jwk-set"
+##docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://cloudbees:8080/jwtauth/conjur-jwk-set"
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8085'
+docker-compose exec client conjur variable set -i  conjur/authn-jwt/jenkins/issuer -v 'https://localhost:8088'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins-server'
+docker-compose exec client conjur variable set -i  conjur/authn-jwt/jenkins/audience -v 'cyberark-conjur'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins_name'
+
+docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
+
+
+
+
+
+
+ 
+
+#./generate_conjur_variables
+
+
+
+echo "loading secrets"
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-secrets.yml
+
+docker-compose exec client conjur policy load -b root -f /policy/jenkins-secrets-comerica.yml
+#docker-compose exec client conjur policy update -b root -f policy/jenkins-secrets-comerica.yml
+
+#docker-compose exec client conjur policy load --delete root /policy/jenkins-secrets-comerica.yml
+
+#docker-compose exec client conjur policy load --delete root policy/jenkins-secrets-comerica.yml
+
+#echo "loading CLI (PATCH Mode) use the !deny statement to remove already existing permissions secrets"
+
+##docker-compose exec client conjur policy load --delete root -f /policy/jenkins-secrets-deny-permit.yml
+
+
+##docker-compose exec client conjur policy load --branch root --delete -f /policy/jenkins-secrets-deny-permit.yml
+
+
+#docker-compose exec client conjur policy load --branch root -f /policy/jenkins-secrets-deny-permit.yml
+
+##docker-compose exec client conjur policy load --branch root --delete -f /policy/jenkins-secrets-deny-permit.yml
+
+
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-secrets-deny-permit.yml
+
+#docker-compose exec client conjur policy load --delete root /policy/jenkins-secrets-comerica.yml
+
+
+
+#docker-compose exec client conjur policy load -b  root -f /policy/jenkins-secrets-comerica.yml
+
+
+
+
+
+#user_dev_api_key=$(docker-compose exec client conjur user rotate-api-key -i myConjurAccount:user:alice)
+#export CONJUR_USER_AUTHN_API_KEY=$user_dev_api_key
+
+#echo $CONJUR_USER_AUTHN_API_KEY
+
+#docker-compose exec client conjur login -i alice -p $CONJUR_USER_AUTHN_API_KEY
+
+#echo "conjur user alice logged"
+
+
+
+
+
+ 
+
+
+
+#echo "populating secret values to conjur variables"
+#docker-compose exec client conjur variable set -i Dev-Team-1-credential1 -v "sameer"
+#docker-compose exec client conjur variable set -i Dev-Team-1-credential2 -v "sameer"
+
+
+#docker-compose exec client conjur variable set -i test-pipeline-credential1 -v "sameer"
+#docker-compose exec client conjur variable set -i test-pipeline-credential2 -v "sameer"
+
+ 
+
+
+#echo "initializing the conjur user account"
+
+ 
+
+#api_key_developer=$(docker-compose exec conjur user rotate-api-key -i developer)
+
+#export CONJUR_USER_AUTHN_API_KEY=$api_key_developer
+
+#echo $CONJUR_USER_AUTHN_API_KEY
+ 
+ 
+#echo "API based authentication policies"
+
+#docker-compose exec client conjur policy load -b root -f policy/conjur-apikey.yml
+#docker-compose exec client conjur policy load -b jenkins-frontend -f policy/jenkins-frontend.yml
+#docker-compose exec client conjur policy load -b root -f policy/conjur2.yml
+#docker-compose exec client conjur policy load -b jenkins-app -f policy/jenkins-app.yml
+#docker-compose exec client conjur list
+#docker-compose exec client conjur variable set -i jenkins-app/dbUserName -v "sameer"
+#docker-compose exec client conjur variable set -i jenkins-app/dbPassword -v "sameer"
+#docker-compose exec client conjur variable set -i jenkins-app/dbUrl -v "https://google.com"
+
+
+
+
+
+#echo "loading authentication policy authn-jwt-jenkins.yml"
+
+#docker-compose exec client conjur policy load root /policy/authn-jwt-jenkins.yml
+
+#docker-compose exec client conjur policy load root /policy/jenkins-projects.yml
+
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+
+# docker-compose exec client conjur policy load -b root -f  /policy/jenkins-projects.yml
+
+
+
+
+#echo "loading authentication values"
+
+#conjur_cli:8
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8084'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins-server'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
+
+
+ docker-compose exec client conjur variable set -i no-folder-1-job-credential1 -v 'cyberark123'
+ docker-compose exec client conjur variable set -i no-folder-1-job-credential2 -v 'cyberark123'
+
+ docker-compose exec client conjur variable set -i no-folder-pipeline-job-credential1 -v 'cyberark123'
+ docker-compose exec client conjur variable set -i no-folder-pipeline-job-credential2 -v 'cyberark123'
+
+ docker-compose exec client conjur variable set -i ark-folder-cred1 -v 'cyberark123'
+ docker-compose exec client conjur variable set -i ark-folder-cred2 -v 'cyberark123'
+ 
+
+
+ docker-compose exec client conjur variable set -i job-test-ark-job-credential1 -v 'cyberark123'
+ docker-compose exec client conjur variable set -i job-test-ark-job-credential2 -v 'cyberark123'
+
+
+docker-compose exec client conjur variable set -i no-folder-2-RBAC-job-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i no-folder-2-RBAC-job-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i no-folder-3-RBAC-job-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i no-folder-3-RBAC-job-credential2 -v 'cyberark123'
+ 
+
+docker-compose exec client conjur variable set -i no-folder-pipelinejob-job-RBAC-job-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i no-folder-pipelinejob-job-RBAC-job-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i sub-folder-3-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i sub-folder-3-credential2 -v 'cyberark123'
+
+
+
+
+
+#docker-compose exec client conjur variable set -i folder-TopLevelFolder-1-credential1 -v 'cyberark123'
+#docker-compose exec client conjur variable set -i folder-TopLevelFolder-1-credential2 -v 'cyberark123'
+
+
+docker-compose exec client conjur variable set -i folder-subLevelFolder-1-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-subLevelFolder-1-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-subChildJob-1-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-subChildJob-1-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-freestyle-project-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-freestyle-project-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i istr-folder-job-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i istr-folder-job-credential2 -v 'cyberark123'
+
+
+docker-compose exec client conjur variable set -i folder-1-regression-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i folder-1-regression-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-2-regression-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-2-regression-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-3-regression-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-3-regression-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-3-regression-freestyle-project-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-3-regression-freestyle-project-credential2 -v 'cyberark123'
+
+
+
+
+docker-compose exec client conjur variable set -i folder-2-pipeline-regression-credential1 -v 'cyberark123'
+docker-compose exec client conjur variable set -i folder-2-pipeline-regression-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i standalone-pipeline-regression-credential1 -v 'Luck@Secure@2024'
+docker-compose exec client conjur variable set -i standalone-pipeline-regression-credential2 -v 'cyberark123'
+
+docker-compose exec client conjur variable set -i folder-1-pipeline-regression-credential1 -v 'sqp_6a4b946860022b7911c5d233728bef215086a14d'
+docker-compose exec client conjur variable set -i forder-1-pipeline-regression-credential2 -v 'test-sonar-no-toekn'
+
+docker-compose exec client conjur variable set -i sonarqube-token-job-credential1 -v 'sqp_992867100822fd91c13a93e69787f770b05b6823'
+docker-compose exec client conjur variable set -i sonarqube-token-job-credential2 -v 'sqp_992867100822fd91c13a93e69787f770b05b6823'
+
+
+
+docker-compose exec client conjur variable set -i no-folder-bitbucket-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i no-folder-bitbucket-credential1  -v 'sameer'
+
+docker-compose exec client conjur variable set -i single-job-standalone-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i single-job-standalone-credential2  -v 'sameer'
+
+
+
+
+docker-compose exec client conjur variable set -i multi-folder-bitbucket-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-bitbucket-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i multi-branch-level-standalone-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-branch-level-standalone-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i multi-folder-job-standalone-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-job-standalone-credential2 -v 'sameer'
+
+
+
+
+
+
+
+
+
+docker-compose exec client conjur variable set -i multi-folder-level-bitbucket-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-level-bitbucket-credential2  -v 'sameer'
+
+
+docker-compose exec client conjur variable set -i multi-folder-level-bitbucket-level-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-level-bitbucket-level-credential2 -v 'sameer'
+
+
+docker-compose exec client conjur variable set -i multi-folder-child-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-child-job-credential1 -v 'sameer'
+
+docker-compose exec client conjur variable set -i multi-folder-child-folder-3-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-child-folder-3-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i multi-folder-child-folder-level-credential1  -v 'sameer'
+docker-compose exec client conjur variable set -i multi-folder-child-folder-level-credential2 -v 'sameer'
+
+
+docker-compose exec client conjur variable set -i intel-multi-folder-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i intel-multi-folder-job-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i intel-multi-branch-folder-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i intel-multi-branch-folder-job-credential2 -v 'sameer'
+
+
+docker-compose exec client conjur variable set -i intel-free-style-folder-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i intel-free-style-folder-job-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i bitbucket-sonarqube-multi-branch-folder-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i bitbucket-sonarqube-multi-branch-folder-job-credential2 -v 'sameer'
+
+
+docker-compose exec client conjur variable set -i intel-test-pipeline-multi-folder-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i intel-test-pipeline-multi-folder-job-credential2 -v 'sameer'
+
+docker-compose exec client conjur variable set -i intel-test-pipeline-multi-folder-bitbucket-job-credential1 -v 'sameer'
+docker-compose exec client conjur variable set -i intel-test-pipeline-multi-folder-bitbucket-job-credential2 -v 'sameer'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 

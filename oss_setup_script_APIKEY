@@ -1,0 +1,254 @@
+
+
+#!/bin/bash
+set +x 
+
+rm -rf .env
+
+docker-compose down -v
+
+#docker-compose build
+
+# docker-compose up -d conjur
+
+# docker-compose up -d proxy
+
+docker-compose exec -T conjur conjurctl wait -r 240
+
+#Generate the master key
+
+docker-compose run --no-deps --rm conjur data-key generate > data_key
+
+export CONJUR_DATA_KEY="$(< data_key)"
+
+echo $CONJUR_DATA_KEY
+
+#create services
+
+docker-compose up -d
+
+sleep 20
+
+echo "created myConjurAccount and login"
+
+echo "***************"
+
+echo " "
+
+admin_api_key=$(docker-compose exec conjur conjurctl account create myConjurAccount | awk '/API key for admin/ {print $NF}'| tr '  \n\r' ' '|awk '{$1=$1};1')
+
+echo "admin_api_key"
+
+echo $admin_api_key
+
+export CONJUR_AUTHN_API_KEY=$admin_api_key
+
+echo $CONJUR_AUTHN_API_KEY
+
+echo " "
+
+echo "****************"
+
+echo "initiating myConjurAccount and logging in as a  admin user"
+
+
+
+
+
+#docker-compose exec client conjur init -u conjur -a myConjurAccount 
+
+docker-compose exec client conjur init -u https://proxy -a myConjurAccount --self-signed
+
+echo "copying conjur-server.pem file to local directory"
+
+docker-compose cp client:/home/cli/conjur-server.pem .
+
+
+
+cat conjur-server.pem
+
+echo "converting conjur-server.pem file to conjur-server.der file"
+
+openssl x509 -outform der -in conjur-server.pem -out conjur-server.der
+
+
+echo " "
+echo "****************"
+echo "Log in to Conjur as admin"
+echo " "
+
+docker-compose exec client conjur authn login -u admin -p $CONJUR_AUTHN_API_KEY
+
+docker-compose exec client conjur login -i admin -p $CONJUR_AUTHN_API_KEY
+
+echo "****************"
+
+echo "conjur user login   "
+
+
+echo "****************"
+
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects.yml
+
+#docker-compose exec client conjur policy load -b root -f policy/conjur.yml
+
+
+
+
+
+
+
+#echo "Log in to Conjur as user "
+
+#docker-compose exec client conjur login -i user 
+
+#user_dev_api_key=$(docker-compose exec client conjur user rotate-api-key -i myConjurAccount:user:alice)
+
+#export CONJUR_USER_AUTHN_API_KEY=$user_dev_api_key
+
+#echo $CONJUR_USER_AUTHN_API_KEY
+
+#echo "conjur user alice role logged"
+
+#docker-compose exec client conjur policy load -b root -f /policy/dev.yml 
+#echo "loading JWT based authentication policy authn-jwt-jenkins.yml"
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects.yml
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+#docker-compose exec client conjur policy load -b root -f  /policy/jenkins-projects.yml
+
+#echo "loading user account policy file"
+
+
+#docker-compose exec client conjur policy load -b root -f policy/conjur.yml
+
+#echo " "
+
+
+#echo "loading authentication values"
+#conjur_cli:8
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://jenkins_server:8080/jwtauth/conjur-jwk-set"
+
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://jenkins_server_2.417:8080/jwtauth/conjur-jwk-set"
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v "http://cloudbees:8080/jwtauth/conjur-jwk-set"
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8085'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8088'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins-server'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins_name'
+
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+#docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
+
+
+
+
+
+
+ 
+
+#./generate_conjur_variables
+
+
+
+#echo "loading secrets"
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-secrets.yml
+
+#user_dev_api_key=$(docker-compose exec client conjur user rotate-api-key -i myConjurAccount:user:alice)
+#export CONJUR_USER_AUTHN_API_KEY=$user_dev_api_key
+
+#echo $CONJUR_USER_AUTHN_API_KEY
+
+#docker-compose exec client conjur login -i alice -p $CONJUR_USER_AUTHN_API_KEY
+
+#echo "conjur user alice logged"
+
+
+
+
+
+ 
+
+
+
+#echo "populating secret values to conjur variables"
+#docker-compose exec client conjur variable set -i Dev-Team-1-credential1 -v "sameer"
+#docker-compose exec client conjur variable set -i Dev-Team-1-credential2 -v "sameer"
+
+
+#docker-compose exec client conjur variable set -i test-pipeline-credential1 -v "sameer"
+#docker-compose exec client conjur variable set -i test-pipeline-credential2 -v "sameer"
+
+ 
+
+
+#echo "initializing the conjur user account"
+
+ 
+
+#api_key_developer=$(docker-compose exec conjur user rotate-api-key -i developer)
+
+#export CONJUR_USER_AUTHN_API_KEY=$api_key_developer
+
+#echo $CONJUR_USER_AUTHN_API_KEY
+
+echo "Conjur JWT Auth"
+
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-projects-comerica.yml
+
+
+ 
+ 
+echo "API based authentication policies"
+
+docker-compose exec client conjur policy load -b root -f policy/conjur-apikey.yml
+docker-compose exec client conjur policy load -b jenkins-frontend -f policy/jenkins-frontend.yml
+docker-compose exec client conjur policy load -b root -f policy/conjur2.yml
+docker-compose exec client conjur policy load -b jenkins-app -f policy/jenkins-app.yml
+#docker-compose exec client conjur list
+docker-compose exec client conjur variable set -i jenkins-app/dbUserName -v "sameer"
+docker-compose exec client conjur variable set -i jenkins-app/dbPassword -v "sameer"
+docker-compose exec client conjur variable set -i jenkins-app/dbUrl -v "https://google.com"
+
+docker-compose exec client conjur variable set -i jenkins-app/dbAdress -v "BLR"
+
+
+
+
+#echo "loading secrets"
+#docker-compose exec client conjur policy load -b root -f /policy/jenkins-secrets-comerica.yml
+
+
+
+
+
+#echo "loading authentication policy authn-jwt-jenkins.yml"
+
+#docker-compose exec client conjur policy load root /policy/authn-jwt-jenkins.yml
+
+#docker-compose exec client conjur policy load root /policy/jenkins-projects.yml
+
+#docker-compose exec client conjur policy load -b root -f /policy/authn-jwt-jenkins.yml
+
+# docker-compose exec client conjur policy load -b root -f  /policy/jenkins-projects.yml
+
+
+
+
+
+
+#echo "loading authentication values"
+
+#conjur_cli:8
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8084'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience -v 'jenkins-server'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+
+# docker-compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
+
+ 

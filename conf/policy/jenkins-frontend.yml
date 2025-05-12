@@ -1,0 +1,5 @@
+- !layer
+- !host NG-SAMEER-SH
+- !grant
+  role: !layer
+  member: !host NG-SAMEER-SH

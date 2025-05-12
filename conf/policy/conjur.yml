@@ -1,0 +1,53 @@
+########
+#https://developer.cyberark.com/blog/understanding-conjur-policy/
+#https://docs.cyberark.com/conjur-cloud/latest/en/Content/Common/cv_ConjurPolicies.htm
+
+# USERS POLICY EXAMPLE
+########
+- !user ted     # no group
+- !user carol   # developer
+- !user bob     # devops
+- !user user   # sec_ops
+
+- !group developers
+- !group devops
+- !group sec_ops
+
+# Grant the less-powerful groups to the more-powerful groups
+- !grant
+  role: !group developers
+  member: !group devops
+
+- !grant
+  role: !group devops
+  member: !group sec_ops
+
+# Grant group roles to users
+- !grant
+  role: !group developers
+  members: 
+    - !user carol
+
+- !grant
+  role: !group devops 
+  members: 
+    - !user bob
+
+    # Grant access to Conjur secrets
+
+- !grant
+  role: !group sec_ops  # Assuming sec_ops is a Conjur RBAC group with access to secrets
+  members:
+    - !user user    # Granting access to the host alice
+
+
+
+########
+# APP ENTITLEMENTS EXAMPLE
+########
+ #Grant permission which adds jenkins/projects to the  conjur/authn-jwt/jenkins/consumers group
+- !grant
+  role: !group conjur/authn-jwt/jenkins/consumers
+  members: 
+     - !group jenkins/projects
+     - !group sec_ops
