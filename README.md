@@ -4,10 +4,11 @@
 This Conjur plugin securely provides credentials that are stored in Conjur to Jenkins jobs.
 
 ## Reference
-* [JENKINS INTEGRATION  ](https://docs.cyberark.com/conjur-enterprise/13.0/en/content/integrations/jenkins.htm)
 * [SECURING SECRETS ACROSS THE CI/CD PIPELINE](https://www.conjur.org/use-cases/ci-cd-pipelines/)
 * [CI/CD Servers Know All Your Plumbing Secrets](https://www.conjur.org/blog/ci-cd-servers-know-all-your-plumbing-secrets/)
 
+**Note**:
+Release 2.0.0 of the Jenkins Conjur Secrets plugin introduces changes to the Jenkins JWT authentication fields ([see Configure JWT authentication in Jenkins](https://docs.cyberark.com/conjur-enterprise/latest/en/content/integrations/jenkins.htm?tocpath=Integrations%7C_____2#Configur3)).
 ## Usage
 
 Install the plugin using Jenkins "Plugin Manager" with an administrator account. After installing the plugin and restarting Jenkins, you are ready to start.
