@@ -43,7 +43,7 @@ cloudbees:
     - ./cloudbees:/var/jenkins_home
 ```
 
-## Configuration Using API-Key
+## Conjur Configuration Using API-Key
 
 ### Define the Policy (`jenkins-host-api.yml`)
 
@@ -71,7 +71,7 @@ conjur variable set -i jenkins-app/dbPassword -v "Password"
 conjur variable set -i jenkins-app/dbUrl -v "http://google.com"
 ```
 
-## Configuration Using JWT Authentication
+## Conjur Configuration Using JWT Authentication
 
 ### Define JWT Authentication Policy (`authn-jwt-jenkins.yml`)
 
@@ -319,6 +319,9 @@ Define them as credentials of kind:
 - **Variable Path**: `jenkins-app/db-Password`  
 - **ID**: `DB_PASSWORD`  
 - **Description**: `Conjur Secret variable for Pipeline-job`
+
+  
+![Create a Conjur Secret Credential](image-4.jpg)
 
 ---
 
