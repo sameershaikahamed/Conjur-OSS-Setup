@@ -3,6 +3,15 @@
 
 This Conjur plugin securely provides credentials that are stored in Conjur to Jenkins jobs.
 
+## Reference
+* [JENKINS PLUGIN REFERENCE ](https://docs.cyberark.com/conjur-enterprise/13.0/en/content/integrations/jenkins.htm)
+* [SECURING SECRETS ACROSS THE CI/CD PIPELINE](https://www.conjur.org/use-cases/ci-cd-pipelines/)
+* [CI/CD Servers Know All Your Plumbing Secrets](https://www.conjur.org/blog/ci-cd-servers-know-all-your-plumbing-secrets/)
+
+## Usage
+
+Install the plugin using Jenkins "Plugin Manager" with an administrator account. After installing the plugin and restarting Jenkins, you are ready to start.
+
 ## Step-by-Step Guide
 
 ### Set up a Conjur Open Source Environment
@@ -237,6 +246,11 @@ conjur variable set -i jenkins-app/dbUrl -v "http://google.com"
 2. In case of API Authentication (not in case of JWT authentication):
    - Provide API Auth Credential
 3. Provide SSH Certificate
+
+* An SSL certificate is specified in the SSL certificate field.
+**Note**: The SSL Certificate can be linked to a certificate already stored in Jenkins (defined as credentials).
+* There is a certificate locally defined in the cacerts of the JVM sending the requests
+* Conjur is not set up to use SSL.
    
 ![Conjur Appliance](image-2.jpg)
       
@@ -392,6 +406,8 @@ For Freestyle projects:
  - Check "Use secret text(s) or file(s)".
 
  -  The secrets will be injected as environment variables to the build steps.
+
+   ![freestyle-project-conf](image-5.jpg)
 
 
 ### In case of JWT authentication
