@@ -238,7 +238,7 @@ conjur variable set -i jenkins-app/dbUrl -v "http://google.com"
    - Provide API Auth Credential
 3. Provide SSH Certificate
    
-![Pipeline View](image1.jpg)
+![Conjur Appliance](image-2.jpg)
       
 ### Global Configuration: Conjur JWT Authentication
 #### In Case of JWT Authentication
@@ -282,6 +282,8 @@ In the configuration page of the item (project, job, foler, etc) you will find t
 
 When Context Aware Credential Stores is enabled, the conjur-credentials plugin will act as a Credential Provider and populate stores with the available secrets/variables based on the current context of the navigation. For this feature, JWT Authentication is used and the JWT Key Set Endpoint needs to be enabled. The credentials provided by the context aware store are available to be used as if they were defined statically.
 
+![JWT Configuration](image-1.jpg)
+
 ## 🔐 Secret Retrieval in Jenkins with Conjur
 
 
@@ -297,6 +299,8 @@ Go to the **Credentials** tab and define the credential as a standard **"Usernam
 
 - **Password**: The **API key** for that host.  
   > This API key is returned by Conjur when the host is loaded in policy.
+
+
 
 ---
 
