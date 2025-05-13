@@ -237,7 +237,8 @@ conjur variable set -i jenkins-app/dbUrl -v "http://google.com"
 2. In case of API Authentication (not in case of JWT authentication):
    - Provide API Auth Credential
 3. Provide SSH Certificate
-   image-1.jpg
+   
+![Pipeline View](image1.jpg)
       
 ### Global Configuration: Conjur JWT Authentication
 #### In Case of JWT Authentication
