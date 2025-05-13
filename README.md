@@ -1,73 +1,81 @@
+
 # Conjur-OSS-Setup
+
 This Conjur plugin securely provides credentials that are stored in Conjur to Jenkins jobs.
-Step by step guide
-Set up a Conjur Open Source environment
-  you can refer https://www.conjur.org/get-started/quick-start/oss-environment/
-Update the docker-compose file with required images and configuration by  including jenkins,cloudbees
- Add Jenkins
-   jenkins_server:
-    image: jenkins/jenkins:2.401.3
-    container_name: jenkins_server
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8088:8080
-    volumes:
-      - ./jenkins_custom_volume:/var/jenkins_home
-    environment:
-      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-      - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
-    restart: on-failure
-  Add CloudBees
-       cloudbees:
-        image: cloudbees/cloudbees-core-mm:2.426.2.2
-        container_name: cloudbees
-        ports:
-          - 8085:8080
-        restart: on-failure
-        volumes:
-           - ./cloudbees:/var/jenkins_home
-Configuration using api-key
-    Define the policy by including hosts and its secrets for api authentication 
-      Define a workload (host) policy in Conjur to represent your workload.
-         Name this policy file as jenkins-host-api.yml
-```
- - !policy 
-    - !host
-       id: jenkins-app
-    - &variables
-      - !variable dbUserName
-      - !variable dbPassword
-      - !variable dbUrl
-```
-Note: Make sure you have same host as jenkins job 
-    Load the policy files 
 
-```
-$ conjur policy load -f jenkins-host-api.yml -b root
+## Step-by-Step Guide
+
+### Set up a Conjur Open Source Environment
+
+Refer to the [Official Conjur OSS Quick Start Guide](https://www.conjur.org/get-started/quick-start/oss-environment/).
+
+### Docker Compose Configuration
+
+#### Add Jenkins
+
+```yaml
+jenkins_server:
+  image: jenkins/jenkins:2.401.3
+  container_name: jenkins_server
+  build:
+    context: .
+    dockerfile: Dockerfile
+  ports:
+    - 8088:8080
+  volumes:
+    - ./jenkins_custom_volume:/var/jenkins_home
+  environment:
+    - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
+  restart: on-failure
 ```
 
-Once you loaded the policy it will generate api-key of that host this api-key is used for authentication of host at jenkins 
-Set the value of secret variables
+#### Add CloudBees
 
-        ```    
-          $ conjur variable set -i jenkins-app/dbUserName -v "JENKINS"  
-        
- ``` 
-       $ conjur variable set -i jenkins-app/dbPassword -v "Password" 
- ```
+```yaml
+cloudbees:
+  image: cloudbees/cloudbees-core-mm:2.426.2.2
+  container_name: cloudbees
+  ports:
+    - 8085:8080
+  restart: on-failure
+  volumes:
+    - ./cloudbees:/var/jenkins_home
+```
 
-    
-    ``` 
-       $ conjur variable set -i jenkins-app/dbUrl -v "http://google.com" 
-    ```
-     
+## Configuration Using API-Key
 
-Configuration using jwt authentication
-    Define policy for jwt authentication
-      Create a JWT authentication policy file and save it is authn-jwt-jenkins.yml
-  ```
+### Define the Policy (`jenkins-host-api.yml`)
+
+```yaml
+- !policy 
+  - !host
+    id: jenkins-app
+  - &variables
+    - !variable dbUserName
+    - !variable dbPassword
+    - !variable dbUrl
+```
+
+### Load the Policy
+
+```bash
+conjur policy load -f jenkins-host-api.yml -b root
+```
+
+### Set Secret Variable Values
+
+```bash
+conjur variable set -i jenkins-app/dbUserName -v "JENKINS"
+conjur variable set -i jenkins-app/dbPassword -v "Password"
+conjur variable set -i jenkins-app/dbUrl -v "http://google.com"
+```
+
+## Configuration Using JWT Authentication
+
+### Define JWT Authentication Policy (`authn-jwt-jenkins.yml`)
+
+```
 - !policy
    id: conjur/authn-jwt/jenkins
    annotations:
@@ -148,21 +156,35 @@ Configuration using jwt authentication
       resource: !webservice status
 ```
 
-    
-Load the policyfile of jwt authentication
-    $conjur policy load  -b root -f  policy/authn-jwt-jenkins.yml
-    set the variables values of authn-jwt policy file
-       In case of jenkins 
-         docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v 'http://jenkins_server:8080/jwtauth/conjur-jwk-set'
-         docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8083'
-       In case of cloudbees
-         docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v 'http://cloudbees:8080/jwtauth/conjur-jwk-set'
-         docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8091'
-      docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience  -v 'cyberark-conjur'
-      docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
-      docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
-    Define the hosts and also secrets and set the values to those secret variables
-      1. Define hosts in policy name it as jenkins-projects.yml
+
+
+## Load JWT Authentication Policy
+
+```bash
+ $ docker compose exec client conjur policy load -b root -f policy/authn-jwt-jenkins.yml
+```
+## Set the variables values of authn-jwt policy file
+   1.  In case of Jenkins
+         ```bash
+         $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v 'http://jenkins_server:8080/jwtauth/conjur-jwk-set'
+         $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8083'
+         ```
+   2.  In case of CloudBees
+
+         ```bash
+         $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/jwks-uri -v 'http://cloudbees:8080/jwtauth/conjur-jwk-set'
+         $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/issuer -v 'http://localhost:8091'
+         ```
+   3. Common for Both
+         ```bash
+            $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/audience  -v 'cyberark-conjur'
+            $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/token-app-property -v 'jenkins_name'
+            $ docker compose exec client conjur variable set -i conjur/authn-jwt/jenkins/identity-path -v 'jenkins/projects'
+         ```
+## Define the hosts and also secrets and set the values to those secret variables
+   1. Define hosts in policy name it as jenkins-projects.yml
+
+      ```yaml
          - !policy
            id: jenkins
            body:
@@ -185,11 +207,14 @@ Load the policyfile of jwt authentication
           - !grant
              role: !group conjur/authn-jwt/jenkins/consumers
              member: !group jenkins/projects
-                  
-      2. load the policy file of hosts defined
-         $ docker compose exec client conjur policy load -b root -f policy/jenkins-projects.yml
-      3. Define the secrets and name it as  jenkins-secrets.yml
-         - &simple-pipeline-secrets
+      ```
+ 2. Load the policy file of hosts defined
+    ```bash
+       $ docker compose exec client conjur policy load -b root -f policy/jenkins-projects.yml
+    ```
+3. Define the secrets and name it as jenkins-secrets.yml
+   ```yaml
+        - &simple-pipeline-secrets
              - !variable pipeline-credential-1
              - !variable pipeline-credential-2
 
@@ -197,24 +222,204 @@ Load the policyfile of jwt authentication
           resources: *simple-pipeline-secrets
           privileges: [read, execute]
           roles: !host jenkins/projects/pipeline-job
-      4. Set the value to those secrets
-          
-         $docker compose exec client conjur variable set -i pipeline-credential-1  -v "This-has-secret-value"
-         $docker compose exec client conjur variable set -i pipeline-credential-2  -v "This-has-secret-value-2"
+   ```
+4. Set the value to those secrets
 
-Global Configuration in jenkins
-  Global Configuration: Conjur Appliance 
-    1. A global configuration allows any job to use the configuration, unless a folder-level configuration overrides the global configuration. Click the Global Credentials tab. Define the Conjur Account and Appliance URL to use.
-     1.1 By providing conjur appliance url and conjur Account.
-     1.2 In case of API Authentication not in case of JWT authentication
-           i) Provide API auth credential 
-           ii) Provide SSH Certificate
+      ```bash
+         $ docker compose exec client conjur variable set -i pipeline-credential-1  -v "This-has-secret-value"
+         $ docker compose exec client conjur variable set -i pipeline-credential-2  -v "This-has-secret-value-2"
+      ```
+## Global Configuration in Jenkins
+###  Global Configuration: Conjur Appliance
+       
+1. By providing Conjur appliance URL and Conjur Account.
+
+2. In case of API Authentication (not in case of JWT authentication):
+   - Provide API Auth Credential
+3. Provide SSH Certificate
       
-  Global Configuration: Conjur JWT Authentication
-      
-      
-   In case of API authentication 
-     Folder/Job Property Configuration
-     Conjur Login Credential (In case of not using JWT Authentication)
-     Conjur Secret Definition (Static)
-Usage from a Jenkins pipeline script
+### Global Configuration: Conjur JWT Authentication
+#### In Case of JWT Authentication
+
+Please read the documentation for the [JWT Authenticator](https://docs.cyberark.com/conjur-enterprise/latest/en/content/operations/services/cjr-authn-jwt.htm?tocpath=Integrations%7CJWT%20Authenticator%7C_____0).
+
+You can enable the use of JWT Authentication by checking **"Enable JWT Key Set Endpoint"**. This will allow the plugin to provide an endpoint for the `JWKS_URI` (described in the documentation link).
+
+The **JWT Key Set Endpoint** will be: BASEURLFORJENKINS/jwtauth/conjur-jwk-set
+
+Once enabled, any job that runs from Jenkins where a Conjur Login Credential has **not** been provided, the `conjur-credentials` plugin will automatically generate a **JWT Token** based on the context of the execution, which can be used as an authentication mechanism.
+
+The token signature will be validated with the **JWT Key Set** exposed by the endpoint.
+
+
+
+#### You also need to define the following:
+
+- Auth WebService ID  :
+  The Service ID of your JWT Authenticator webservice.  
+  This could be either the `service-id` or `authenticator_type/service_id` (e.g., `authn-jwt/my-service-id`).
+
+- JWT Audience  :
+  The `aud` value in the JWT Token.
+
+- Signing Key Lifetime (in Minutes) :
+  Defines how long the signing key for JWT Tokens will be valid and exposed via the JWT Key Set endpoint.
+
+- JWT Token Duration (in Seconds) :
+  Lifetime of any JWT token generated via the `conjur-credentials` plugin.
+
+- Identity Format Fields :
+  Comma-separated list of JWT Claim fields to be concatenated for the value of the Identity Field.
+
+- Enable Context Aware Credential Stores  :
+  Please see the following section for more details.
+#### How to obtain JWT Token Claims
+In the configuration page of the item (project, job, foler, etc) you will find the "JWT Token Claims" button, clicking on it will show the JWT Token claims for the  item based on the context where it is
+
+#### Global Configuration: Context Aware Credential Stores (Conjur Credentials Provider)
+
+When Context Aware Credential Stores is enabled, the conjur-credentials plugin will act as a Credential Provider and populate stores with the available secrets/variables based on the current context of the navigation. For this feature, JWT Authentication is used and the JWT Key Set Endpoint needs to be enabled. The credentials provided by the context aware store are available to be used as if they were defined statically.
+
+## 🔐 Secret Retrieval in Jenkins with Conjur
+
+
+### 🔑 In Case of API Authentication
+
+#### 1. Conjur Auth Credential
+
+The first step is to store the credentials required for Jenkins to connect to Conjur.  
+Go to the **Credentials** tab and define the credential as a standard **"Username with password"** credential.
+
+- **Username**: `host/jenkins/projects/pipeline-job`  
+  > The host must already be defined in your Conjur policy.
+
+- **Password**: The **API key** for that host.  
+  > This API key is returned by Conjur when the host is loaded in policy.
+
+---
+
+#### 2. Conjur Secret Definition (Static)
+
+The secrets you want to retrieve from Conjur must be defined explicitly under the **ConjurSecret** tab.
+
+Define them as credentials of kind:
+
+- `Conjur Secret Credential`
+- `Conjur Secret Username Credential`
+- `Conjur Secret Username SSHKey Credential`
+
+📌 **Example: Conjur Secret Credential**
+
+- **Variable Path**: `jenkins-app/db-Password`  
+- **ID**: `DB_PASSWORD`  
+- **Description**: `Conjur Secret variable for Pipeline-job`
+
+---
+
+#### 3. Usage from a Jenkins Pipeline Script
+
+Use `withCredentials` and the symbol:
+
+- `conjurSecretCredential`
+- `conjurSecretUsername`
+- `conjurSecretUsernameSSHKey`
+
+##### 📌 Example 1: Conjur Secret Credential
+
+```groovy
+node {
+    stage('Work') {
+        withCredentials([conjurSecretCredential(credentialsId: 'DB_PASSWORD', variable: 'SECRET')]) {
+            echo 'Hello World $SECRET'
+        }
+    }
+    stage('Results') {
+        echo 'Finished!'
+    }
+}
+```
+##### 📌 Example 2: Conjur Secret Username SSHKey Credential
+
+```groovy
+node {
+    stage('Work') {
+        withCredentials([conjurSecretUsernameSSHKey(
+            credentialsId: 'username-conjur-authn-api-test-database-password', 
+            usernameVariable: 'USERNAME', 
+            secretVariable: 'SECRET')]) {
+            echo 'Hello World $USERNAME $SECRET'
+        }
+    }
+    stage('Results') {
+        echo 'Finished!'
+    }
+}
+```
+
+##### 📌 Example 3: Conjur Secret Username Credential
+
+```groovy
+node {
+    stage('Work') {
+        withCredentials([conjurSecretUsername(
+            credentialsId: 'username-conjur-authn-api-test-database-password', 
+            usernameVariable: 'USERNAME', 
+            passwordVariable: 'SECRET')]) {
+            echo 'Hello World $USERNAME $SECRET'
+        }
+    }
+    stage('Results') {
+        echo 'Finished!'
+    }
+}
+```
+
+---
+#### 4. Usage from a Jenkins Freestyle Project
+For Freestyle projects:
+
+ - Go to Build Environment section.
+
+ - Check "Use secret text(s) or file(s)".
+
+ -  The secrets will be injected as environment variables to the build steps.
+
+
+### In case of JWT authentication
+#### 1. Policy Annotations for Context Aware Credential Store
+
+To enable automatic secret retrieval using JWT Authentication in Jenkins, you can annotate your **Conjur policy**. 
+
+These annotations allow the Jenkins Conjur plugin to expose **Conjur Secret Credential** entries based on the context.
+
+📌 **Example Host Definition with Annotations:**
+
+```yaml
+- !host
+  id: pipeline-job
+  annotations:
+    jenkins: true
+    authn-jwt/jenkins/jenkins_pronoun: Pipeline
+    authn-jwt/jenkins/jenkins_full_name: pipeline-job
+```
+
+- Any secret variable in Conjur associated with the host (as shown above) will be exposed in Jenkins.
+
+- These secrets will appear in the Credentials Store as type Conjur Secret Credential.
+  
+#### 2. Usage from a Jenkins Pipeline Script
+You can retrieve the exposed Conjur secrets in your Jenkins Pipeline using withCredentials and the conjurSecretCredential symbol.
+##### 📌 Example 1: Conjur Secret Credential
+
+```groovy
+node {
+    stage('Work') {
+        withCredentials([conjurSecretCredential(credentialsId: 'pipeline-credential-1', variable: 'SECRET')]) {
+            echo 'Hello World $SECRET'
+        }
+    }
+    stage('Results') {
+        echo 'Finished!'
+    }
+}
+```
