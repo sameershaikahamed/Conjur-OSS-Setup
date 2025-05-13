@@ -300,7 +300,7 @@ Go to the **Credentials** tab and define the credential as a standard **"Usernam
 - **Password**: The **API key** for that host.  
   > This API key is returned by Conjur when the host is loaded in policy.
 
-
+![Conjur Auth Credential Configuration](image-3.jpg)
 
 ---
 
