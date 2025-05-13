@@ -60,10 +60,10 @@ cloudbees:
 - !policy 
   - !host
     id: jenkins-app
-  - &variables
-    - !variable dbUserName
-    - !variable dbPassword
-    - !variable dbUrl
+    - &variables
+       - !variable dbUserName
+       - !variable dbPassword
+       - !variable dbUrl
 ```
 
 ### Load the Policy
