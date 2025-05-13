@@ -26,16 +26,10 @@ Refer to the [Official Conjur OSS Quick Start Guide](https://www.conjur.org/get-
 jenkins_server:
   image: jenkins/jenkins:2.401.3
   container_name: jenkins_server
-  build:
-    context: .
-    dockerfile: Dockerfile
   ports:
     - 8088:8080
   volumes:
     - ./jenkins_custom_volume:/var/jenkins_home
-  environment:
-    - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-    - PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH
   restart: on-failure
 ```
 
